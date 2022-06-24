@@ -1,0 +1,22 @@
+TO DO:
+
+- Make sure video ends with max(person leaving or blink end)
+- add time stamp columns to events_copy.csv
+- handle cases with missing videos
+
+
+
+
+
+
+
+
+- change final video titles?
+- cannot handle cases with missing videos
+- convert absolute filepaths to relative filepaths
+- figure out more efficient way to sort filenames
+- make figuring out start/end idxs more efficient
+- figure out how to save as avi 
+- figure out how to create executable so it can be run on a windows computer
+- put create_csv as part of project.py
+
