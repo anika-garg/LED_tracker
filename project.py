@@ -1,10 +1,18 @@
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from moviepy.editor import VideoFileClip, concatenate_videoclips 
 import os
 import shutil
 import pandas as pd
 import sys
+
+class LightRow:
+    def __init__(self):
+        self.blink_start = None
+        self.blink_end = None
+        self.person_start = None
+        self.person_end = None
+        self.end = None
 
 # create videos.csv
 
@@ -30,14 +38,24 @@ for v in video_times:
 
 
 # make nested list of datetime objects of blinking [start_time, end_time]
-light_times = []
+light_rows = []
 with open("/Users/anikagarg/Desktop/" + folder + "/events.csv") as file2:
     csvreader2 = csv.reader(file2)
     header = next(csvreader2)
     for row in csvreader2:
-        start_time = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S')
-        end_time = datetime.strptime(row[2], '%Y-%m-%d %H:%M:%S')
-        light_times.append([start_time, end_time])
+        # light_start_time = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S')
+        # light_end_time = datetime.strptime(row[2], '%Y-%m-%d %H:%M:%S')
+        # person_arrives= light_start_time + timedelta(seconds = (int(row[4])))
+        # person_leaves = light_start_time + timedelta(seconds = (int(row[4]) + int(row[5])))
+        # end_time = max(light_end_time, person_leaves)
+        # light_rows.append([light_start_time, end_time])
+        light_row = LightRow()
+        light_row.blink_start = datetime.strptime(row[1], '%Y-%m-%d %H:%M:%S')
+        light_row.blink_end = datetime.strptime(row[2], '%Y-%m-%d %H:%M:%S')
+        light_row.person_start = light_row.blink_start + timedelta(seconds = (int(row[4])))
+        light_row.person_end = light_row.blink_start + timedelta(seconds = (int(row[4]) + int(row[5])))
+        light_row.end = max(light_row.blink_end, light_row.person_end)
+        light_rows.append(light_row)
 
 # function to find start video
 def nearest_start(items, pivot):
@@ -69,9 +87,9 @@ def nearest_end(items, pivot):
 
 # make nested list of indexes of videos [start_idx, end_idx]
 indexes = []
-for start,end in light_times:
-    start_video = video_times.index(nearest_start(video_times, start))
-    end_video = video_times.index(nearest_end(video_times, end))
+for light_row in light_rows:
+    start_video = video_times.index(nearest_start(video_times, light_row.blink_start))
+    end_video = video_times.index(nearest_end(video_times, light_row.end))
     indexes.append([start_video, end_video])
 
 #. 1 for loop for light time
@@ -80,7 +98,7 @@ for start,end in light_times:
 #. 3 keep track of closest start and end time
 
 
-# concatenate video clips and save to folder, add video name to new column in csv
+# concatenate video clips and save to folder, add video name and time stamp columns to csv
 df = pd.read_csv("/Users/anikagarg/Desktop/" + folder + "/events.csv")
 os.makedirs("/Users/anikagarg/Desktop/" + folder + "/Final_Videos", exist_ok=True)
 for i in range(len(indexes)):
@@ -93,7 +111,14 @@ for i in range(len(indexes)):
     final_clip.write_videofile(final_clip_name)
     shutil.move("/Users/anikagarg/Desktop/" + final_clip_name, "/Users/anikagarg/Desktop/" + folder + "/Final_Videos/")
     df.loc[df.index[i], 'video_name'] = final_clip_name
+    df.loc[df.index[i], 'start_timestamp'] = str(light_rows[i].blink_start - video_times[indexes[i][0]])
+    df.loc[df.index[i], 'arrives_timestamp'] = str(light_rows[i].person_start - video_times[indexes[i][0]])
+    df.loc[df.index[i], 'stop_timestamp'] = str(light_rows[i].blink_end - video_times[indexes[i][0]])
+    df.loc[df.index[i], 'leaves_timestamp'] = str(light_rows[i].person_end - video_times[indexes[i][0]])
 df.to_csv("/Users/anikagarg/Desktop/" + folder + "/events_copy.csv", index=False)
+
+
+
 
 
 

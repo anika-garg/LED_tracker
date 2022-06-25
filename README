@@ -1,10 +1,11 @@
 TO DO:
 
-- Make sure video ends with max(person leaving or blink end)
 - add time stamp columns to events_copy.csv
 - handle cases with missing videos
 
 
+DONE:
+- Make sure video ends with max(person leaving or blink end)
 
 
 
